@@ -1,16 +1,60 @@
 from django.contrib.auth import logout, login
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.views import LoginView
 from django.core.paginator import Paginator
-from django.http import HttpResponse, HttpResponseNotFound, Http404
-from django.shortcuts import render, redirect, get_object_or_404
+from django.forms import model_to_dict
+from django.http import HttpResponseNotFound
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+from rest_framework import generics, viewsets, mixins
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.views import APIView
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.pagination import PageNumberPagination
+
 from .forms import *
-from .models import *
+from .models import Debate, Category
+from .serializers import DebateSerializer
+from .permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser, IsAuthenticated
 from .utils import *
+
+
+class DebateAPIListPagination(PageNumberPagination):
+    page_size = 3
+    page_size_query_param = 'page_size'
+    max_page_size = 2
+
+
+class DebateAPIList(generics.ListCreateAPIView):
+    queryset = Debate.objects.all()
+    serializer_class = DebateSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly, )
+    pagination_class = DebateAPIListPagination
+
+
+class DebateAPIUpdate(generics.RetrieveUpdateAPIView):
+    queryset = Debate.objects.all()
+    serializer_class = DebateSerializer
+    permission_classes = (IsAuthenticated, )
+    # authentication_classes = (TokenAuthentication, )
+
+
+class DebateAPIDestroy(generics.RetrieveDestroyAPIView):
+    queryset = Debate.objects.all()
+    serializer_class = DebateSerializer
+    permission_classes = (IsAdminOrReadOnly, )
+
+
+
+
+
+
+
 
 
 class DebateHome(DataMixin, ListView):
